@@ -46,6 +46,17 @@ app.include_router(jobs.router, prefix=settings.api_prefix)
 app.include_router(info.router, prefix=settings.api_prefix)
 
 
+@app.get("/")
+async def root() -> dict:
+    return {
+        "name": settings.app_name,
+        "status": "ok",
+        "docs": "/docs",
+        "health": "/health",
+        "api": settings.api_prefix,
+    }
+
+
 @app.get("/health")
 async def health() -> dict:
     return {"status": "ok"}
