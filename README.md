@@ -18,9 +18,10 @@ youtube-mp3/
 │  │  ├─ core/         # jobstore, queue (interfaces + impl. en memoria)
 │  │  ├─ services/     # downloader (yt-dlp)
 │  │  └─ routers/      # jobs, info
-│  ├─ requirements.txt
-│  └─ Dockerfile
+│  └─ requirements.txt
 ├─ web/                # Frontend Vite + React + TS + Tailwind v4
+├─ Dockerfile          # Imagen del backend (ffmpeg + deno). Contexto: raíz del repo
+├─ render.yaml         # Blueprint de Render
 └─ docker-compose.yml
 ```
 

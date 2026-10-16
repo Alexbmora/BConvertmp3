@@ -1,12 +1,18 @@
 services:
-  # API FastAPI + yt-dlp + ffmpeg. Usa Docker para incluir ffmpeg/deno.
+  # API FastAPI + yt-dlp + ffmpeg. Dockerfile en la raíz del repo (incluye ffmpeg/deno).
   - type: web
     name: ytmp3-api
     runtime: docker
     plan: free
-    rootDir: backend
     healthCheckPath: /health
     autoDeploy: true
+    dockerfilePath: ./Dockerfile
+    dockerContext: ./
+    buildFilter:
+      paths:
+        - backend/**
+        - Dockerfile
+        - .dockerignore
     envVars:
       - key: APP_CORS_ORIGINS
         value: '["https://ytmp3-web.onrender.com"]'
@@ -20,6 +26,9 @@ services:
     buildCommand: cd web && npm ci && npm run build
     staticPublishPath: web/dist
     autoDeploy: true
+    buildFilter:
+      paths:
+        - web/**
     envVars:
       - key: VITE_API_BASE_URL
         value: https://ytmp3-api.onrender.com

@@ -12,10 +12,10 @@ ENV PATH="/opt/deno/bin:${PATH}"
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app ./app
+COPY backend/app ./app
 
 ENV APP_DOWNLOADS_DIR=/data/downloads
 EXPOSE 8000
