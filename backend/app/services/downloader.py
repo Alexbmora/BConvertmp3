@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
 import yt_dlp
 
@@ -26,6 +27,18 @@ class Downloader:
         }
         if self.settings.ffmpeg_location:
             options["ffmpeg_location"] = self.settings.ffmpeg_location
+        if self.settings.cookies_file and Path(self.settings.cookies_file).exists():
+            options["cookiefile"] = str(self.settings.cookies_file)
+        if self.settings.ytdlp_proxy:
+            options["proxy"] = self.settings.ytdlp_proxy
+        if self.settings.ytdlp_player_client:
+            clients = [
+                c.strip()
+                for c in self.settings.ytdlp_player_client.split(",")
+                if c.strip()
+            ]
+            if clients:
+                options["extractor_args"] = {"youtube": {"player_client": clients}}
         return options
 
     def extract_info(self, url: str) -> dict:
