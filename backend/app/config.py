@@ -53,12 +53,20 @@ def _resolve_cookies(settings: Settings) -> Path | None:
         except (ValueError, UnicodeDecodeError) as exc:
             logger.warning("No se pudieron decodificar APP_COOKIES_B64: %s", exc)
             text = None
+    if not text and settings.cookies_file and settings.cookies_file.exists():
+        try:
+            text = settings.cookies_file.read_text(encoding="utf-8", errors="ignore")
+        except OSError as exc:
+            logger.warning(
+                "No se pudo leer APP_COOKIES_FILE (%s): %s", settings.cookies_file, exc
+            )
+            text = None
     if text:
-        path = settings.downloads_dir / "cookies.txt"
-        path.write_text(text, encoding="utf-8")
-        return path
-    if settings.cookies_file and settings.cookies_file.exists():
-        return settings.cookies_file
+        # Copiamos a una ruta escribible: yt-dlp reescribe el cookiefile al cerrar
+        # y /etc/secrets (Secret Files) es de solo lectura.
+        dest = settings.downloads_dir / "cookies.txt"
+        dest.write_text(text, encoding="utf-8")
+        return dest
     return None
 
 
