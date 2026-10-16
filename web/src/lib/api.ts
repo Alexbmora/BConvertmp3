@@ -30,30 +30,46 @@ export interface VideoInfo {
   webpage_url: string | null
 }
 
-const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
+const RAW_BASE = import.meta.env.VITE_API_BASE_URL ?? ''
+const BASE = RAW_BASE.replace(/\/+$/, '')
+
+const TARGET = BASE || 'mismo origen (falta VITE_API_BASE_URL)'
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
-    ...init,
-  })
-  if (!res.ok) {
-    let detail = res.statusText
-    try {
-      const data = await res.json()
-      if (data?.detail) {
-        detail =
-          typeof data.detail === 'string'
-            ? data.detail
-            : JSON.stringify(data.detail)
-      }
-    } catch {
-      /* ignore */
-    }
-    throw new Error(detail)
+  let res: Response
+  try {
+    res = await fetch(`${BASE}${path}`, {
+      headers: { 'Content-Type': 'application/json' },
+      ...init,
+    })
+  } catch {
+    throw new Error(
+      `No se pudo conectar con la API en ${TARGET}. Revisa VITE_API_BASE_URL y el CORS.`,
+    )
   }
-  if (res.status === 204) return undefined as T
-  return (await res.json()) as T
+
+  const text = await res.text()
+  let data: unknown
+  if (text) {
+    try {
+      data = JSON.parse(text)
+    } catch {
+      data = text
+    }
+  }
+
+  if (!res.ok) {
+    const detail =
+      data && typeof data === 'object' && 'detail' in data
+        ? (data as { detail: unknown }).detail
+        : text || res.statusText || `HTTP ${res.status}`
+    throw new Error(
+      typeof detail === 'string' ? detail : JSON.stringify(detail),
+    )
+  }
+
+  if (res.status === 204 || text === '') return undefined as T
+  return data as T
 }
 
 export const api = {
