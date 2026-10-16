@@ -1,0 +1,29 @@
+services:
+  # API FastAPI + yt-dlp + ffmpeg. Usa Docker para incluir ffmpeg/deno.
+  - type: web
+    name: ytmp3-api
+    runtime: docker
+    plan: free
+    rootDir: backend
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: APP_CORS_ORIGINS
+        value: '["https://ytmp3-web.onrender.com"]'
+      - key: APP_MAX_CONCURRENT_JOBS
+        value: '2'
+
+  # Frontend estático (Vite). VITE_API_BASE_URL se hornea en el bundle en build time.
+  - type: web
+    name: ytmp3-web
+    runtime: static
+    buildCommand: cd web && npm ci && npm run build
+    staticPublishPath: web/dist
+    autoDeploy: true
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://ytmp3-api.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
