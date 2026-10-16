@@ -41,9 +41,18 @@ class Downloader:
                 options["extractor_args"] = {"youtube": {"player_client": clients}}
         return options
 
+    def _open(self, options: dict) -> yt_dlp.YoutubeDL:
+        ydl = yt_dlp.YoutubeDL(options)
+        # Fuerza la carga del cookiejar y luego anula cookiefile para que yt-dlp
+        # NO reescriba el archivo (evita que pode/expire cookies en cada corrida).
+        if options.get("cookiefile"):
+            _ = ydl.cookiejar
+            ydl.params["cookiefile"] = None
+        return ydl
+
     def extract_info(self, url: str) -> dict:
         options = {**self._base_options(), "skip_download": True}
-        with yt_dlp.YoutubeDL(options) as ydl:
+        with self._open(options) as ydl:
             info = ydl.extract_info(url, download=False)
         return {
             "title": info.get("title"),
@@ -71,7 +80,7 @@ class Downloader:
                 {"key": "EmbedThumbnail", "already_have_thumbnail": False},
             ],
         }
-        with yt_dlp.YoutubeDL(options) as ydl:
+        with self._open(options) as ydl:
             info = ydl.extract_info(job.url, download=True)
 
         file_path = self.settings.downloads_dir / f"{job.id}.mp3"
