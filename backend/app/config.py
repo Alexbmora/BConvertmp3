@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import base64
+import logging
 from functools import lru_cache
 from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -47,7 +50,8 @@ def _resolve_cookies(settings: Settings) -> Path | None:
     if not text and settings.cookies_b64:
         try:
             text = base64.b64decode(settings.cookies_b64).decode("utf-8")
-        except (ValueError, UnicodeDecodeError):
+        except (ValueError, UnicodeDecodeError) as exc:
+            logger.warning("No se pudieron decodificar APP_COOKIES_B64: %s", exc)
             text = None
     if text:
         path = settings.downloads_dir / "cookies.txt"
@@ -65,4 +69,11 @@ def get_settings() -> Settings:
     cookies = _resolve_cookies(settings)
     if cookies is not None:
         settings.cookies_file = cookies
+        try:
+            size = cookies.stat().st_size
+        except OSError:
+            size = -1
+        logger.info("Cookies cargadas en %s (%s bytes)", cookies, size)
+    else:
+        logger.warning("Sin cookies de YouTube (APP_COOKIES_B64/APP_COOKIES_TEXT/APP_COOKIES_FILE)")
     return settings

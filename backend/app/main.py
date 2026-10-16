@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,6 +12,8 @@ from app.core.jobstore import InMemoryJobStore
 from app.core.queue import JobQueue
 from app.routers import info, jobs
 from app.services.downloader import Downloader
+
+logging.basicConfig(level=logging.INFO)
 
 settings = get_settings()
 
@@ -59,4 +63,12 @@ async def root() -> dict:
 
 @app.get("/health")
 async def health() -> dict:
-    return {"status": "ok"}
+    payload: dict = {"status": "ok", "cookies": False}
+    cookies = settings.cookies_file
+    if cookies and Path(cookies).exists():
+        text = Path(cookies).read_text(encoding="utf-8", errors="ignore")
+        payload["cookies"] = True
+        payload["cookie_count"] = sum(
+            1 for line in text.splitlines() if line and not line.startswith("#")
+        )
+    return payload
